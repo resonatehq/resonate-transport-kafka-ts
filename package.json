@@ -30,5 +30,8 @@
 	"dependencies": {
 		"@confluentinc/kafka-javascript": "^1.6.0",
 		"@resonatehq/sdk": "^0.8.6"
-	}
+	},
+	"trustedDependencies": [
+		"@confluentinc/kafka-javascript"
+	]
 }
