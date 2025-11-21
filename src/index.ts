@@ -194,9 +194,10 @@ interface KafkaResponse {
 export class KafkaTransport implements Network, MessageSource {
 	private group: string;
 	private pid: string;
-	private partition: number;
-	private topicRequests: string;
-	private topicResponses: string;
+	private requestPartition: number;
+	private responsePartition: number;
+	private requestTopic: string;
+	private responseTopic: string;
 
 	private producer: KafkaJS.Producer;
 	private consumerResponse: KafkaJS.Consumer;
@@ -215,17 +216,19 @@ export class KafkaTransport implements Network, MessageSource {
 
 	constructor({
 		group = "default",
-		partition = 0,
-		topicRequests = "resonate",
-		topicResponses = "resonate",
+		requestPartition = 0,
+		requestTopic = "resonate",
+		responsePartition = 0,
+		responseTopic = "resonate",
 		pid = crypto.randomUUID().replace(/-/g, ""),
 		kafka = undefined,
 	}: {
 		group?: string;
 		pid?: string;
-		partition?: number;
-		topicRequests?: string;
-		topicResponses?: string;
+		requestPartition?: number;
+		requestTopic?: string;
+		responsePartition?: number;
+		responseTopic?: string;
 		kafka?: KafkaJS.Kafka;
 	} = {}) {
 		kafka =
@@ -240,9 +243,10 @@ export class KafkaTransport implements Network, MessageSource {
 
 		this.group = group;
 		this.pid = pid;
-		this.partition = partition;
-		this.topicRequests = topicRequests;
-		this.topicResponses = topicResponses;
+		this.requestPartition = requestPartition;
+		this.responsePartition = responsePartition;
+		this.requestTopic = requestTopic;
+		this.responseTopic = responseTopic;
 
 		this.pendingRequests = new Map();
 
@@ -271,7 +275,7 @@ export class KafkaTransport implements Network, MessageSource {
 		await this.consumerResponse.connect();
 
 		// Subscribe and start consuming
-		await this.consumerResponse.subscribe({ topic: this.topicResponses });
+		await this.consumerResponse.subscribe({ topic: this.responseTopic });
 
 		// Start consumer loop
 		await this.consumerResponse.run({
@@ -367,9 +371,9 @@ export class KafkaTransport implements Network, MessageSource {
 		const kafkaRequest: KafkaRequest = {
 			target: "resonate.server",
 			replyTo: {
-				topic: this.topicResponses,
+				topic: this.responseTopic,
 				target: this.pid,
-				partition: this.partition,
+				partition: this.responsePartition,
 			},
 			correlationId: correlationId,
 			operation: op,
@@ -378,7 +382,7 @@ export class KafkaTransport implements Network, MessageSource {
 
 		try {
 			await this.producer.send({
-				topic: this.topicRequests,
+				topic: this.requestTopic,
 				messages: [{ value: JSON.stringify(kafkaRequest) }],
 			});
 		} catch (e) {

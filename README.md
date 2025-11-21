@@ -1,4 +1,4 @@
-# resonate-transport-kafka-ts
+# @resonatehq/transport-kafka
 
 To install dependencies:
 
