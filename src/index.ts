@@ -259,7 +259,7 @@ export class Kafka implements Network, MessageSource {
     });
 
     this.consumerMessages = kafka.consumer({
-      "auto.offset.reset": "latest",
+      "auto.offset.reset": "earliest",
       "enable.auto.commit": true,
       "group.id": this.group,
       "session.timeout.ms": 6000,
@@ -332,6 +332,14 @@ export class Kafka implements Network, MessageSource {
         this.recv(msg);
       },
     });
+
+    while (this.consumerResponse.assignment().length === 0) {
+      await new Promise((r) => setTimeout(r, 100));
+    }
+
+    while (this.consumerMessages.assignment().length === 0) {
+      await new Promise((r) => setTimeout(r, 100));
+    }
   }
 
   recv(msg: Message): void {
