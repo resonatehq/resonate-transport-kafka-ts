@@ -333,6 +333,10 @@ export class Kafka implements Network, MessageSource {
       },
     });
 
+    // Block until Kafka assigns to both consumers.
+    // This prevents a potential deadlock where
+    // subsequent requests are sent but cannot
+    // be received due to unassigned topics.
     while (this.consumerResponse.assignment().length === 0) {
       await new Promise((r) => setTimeout(r, 100));
     }
