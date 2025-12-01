@@ -1,36 +1,37 @@
 # @resonatehq/kafka
 
-`@resonatehq/kafka` is the official transport binding to run **Distributed Async Await**, Resonate's durable-execution framework, on top of [Apache Kafka](https://kafka.apache.org). Use Kafka as the durable, ordered, and scalable message bus that connects Resonate workers across processes and machines.
-
-## Architecture
-
-Resonate is transport-agnostic. When a Durable Function yields a pending Durable Promise (for example via `yield* ctx.rpc()`), the request is published to Kafka and the current worker can continue or terminate. Another worker — possibly on a different machine — consumes the message, executes the target handler, and publishes the reply. Resonate uses message correlation to resume the original flow when the reply arrives.
-
-```ts
-function* foo(ctx: Context): Generator {
-  // dispatch `baz` across the cluster via Kafka
-  const reply = yield* ctx.rpc('baz');
-  return reply;
-}
-
-function baz(ctx: Context) {
-  return `hello world`;
-}
-```
+`@resonatehq/kafka` is the official [Kafka](https://kafka.apache.org) transport binding for running Distributed Async Await, Resonate’s durable-execution framework. This package allows Resonate workers to communicate over Apache Kafka, using Kafka as a durable, ordered, and scalable message bus across processes and machines.
 
 ## Quick Start
 
+### Installation
 ```bash
 npm install @resonatehq/kafka
 ```
 
-```ts
-import { Resonate, Context } from "@resonatehq/sdk";
-import { Kafka } from '@resonatehq/kafka';
+### Example
+
+```typescript
+import { type Context, Resonate } from "@resonatehq/sdk";
+import { Kafka } from "@resonatehq/kafka";
+
+async function main() {
+  const transport = new Kafka({ brokers: ["localhost:9092"] });
+  await transport.start();
+
+  const resonate = new Resonate({ transport });
+
+  resonate.register("foo", foo);
+  resonate.register("baz", baz);
+
+  const v = await resonate.run("foo.1", foo);
+  console.log(v);
+
+  resonate.stop();
+}
 
 function* foo(ctx: Context): Generator {
-  // dispatch `baz` across the cluster via Kafka
-  const reply = yield* ctx.rpc('baz');
+  const reply = yield* ctx.rpc("baz");
   return reply;
 }
 
@@ -38,12 +39,17 @@ function baz(ctx: Context) {
   return `hello world`;
 }
 
+main()
+```
+### Start Resonate with Kafka enabled
+Ensure the `resonate` and `default` Kafka topics exist:
+```bash
+<!-- start resonate with kafka enabled -->
+resonate dev --api-kafka-enable --aio-sender-plugin-kafka-enable
+```
 
-const transport = new Kafka({});
-
-const resonate = new Resonate({ transport });
-
-resonate.register('foo', foo);
-resonate.register('baz', baz);
-
+### Run the Application
+```bash
+<!-- run the app -->
+npx ts-node app.ts
 ```

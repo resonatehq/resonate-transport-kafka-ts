@@ -212,14 +212,16 @@ export class Kafka implements Network, MessageSource {
   private pendingRequests: Map<string, (err?: ResonateError, res?: Response) => void>;
 
   constructor({
+    brokers = ["localhost:9092"],
     group = "default",
+    pid = crypto.randomUUID().replace(/-/g, ""),
     requestPartition = undefined,
     requestTopic = "resonate",
     responsePartition = undefined,
     responseTopic = "resonate",
-    pid = crypto.randomUUID().replace(/-/g, ""),
     kafka = undefined,
   }: {
+    brokers?: string[];
     group?: string;
     pid?: string;
     requestPartition?: number;
@@ -234,7 +236,7 @@ export class Kafka implements Network, MessageSource {
         "allow.auto.create.topics": true,
         "client.id": pid,
         log_level: 3,
-        "metadata.broker.list": "localhost:9092",
+        "metadata.broker.list": brokers.join(", "),
         "metadata.max.age.ms": 1000,
       });
 
