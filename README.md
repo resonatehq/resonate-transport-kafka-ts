@@ -1,17 +1,18 @@
 # @resonatehq/kafka
 
-`@resonatehq/kafka` is the official [Kafka](https://kafka.apache.org) transport binding for running Distributed Async Await, Resonate’s durable-execution framework. This package allows Resonate workers to communicate over Apache Kafka, using Kafka as a durable, ordered, and scalable message bus across processes and machines.
+`@resonatehq/kafka` is the official [Kafka](https://kafka.apache.org) transport binding for [Resonate](https://github.com/resonatehq/resonate).
 
 ## Quick Start
 
-### Installation
+### Install
 ```bash
 npm install @resonatehq/kafka
 ```
 
-### Example
+### Run
 
-```typescript
+**app.ts**
+```ts
 import { type Context, Resonate } from "@resonatehq/sdk";
 import { Kafka } from "@resonatehq/kafka";
 
@@ -20,9 +21,8 @@ async function main() {
   await transport.start();
 
   const resonate = new Resonate({ transport });
-
-  resonate.register("foo", foo);
-  resonate.register("baz", baz);
+  resonate.register(foo);
+  resonate.register(bar);
 
   const v = await resonate.run("foo.1", foo);
   console.log(v);
@@ -31,25 +31,26 @@ async function main() {
 }
 
 function* foo(ctx: Context): Generator {
-  const reply = yield* ctx.rpc("baz");
-  return reply;
+  return yield* ctx.rpc("bar");
 }
 
-function baz(ctx: Context) {
-  return `hello world`;
+function bar(ctx: Context) {
+  return "hello world";
 }
 
 main()
 ```
-### Start Resonate with Kafka enabled
-Ensure the `resonate` and `default` Kafka topics exist:
+
+Create the following topics:
+- resonate
+- default
+
+Start the server:
 ```bash
-<!-- start resonate with kafka enabled -->
-resonate dev --api-kafka-enable --aio-sender-plugin-kafka-enable
+resonate dev --api-kafka-enable --aio-kafka-enable
 ```
 
-### Run the Application
+Start the client:
 ```bash
-<!-- run the app -->
 npx ts-node app.ts
 ```
